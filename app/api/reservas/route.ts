@@ -1,0 +1,33 @@
+import { obtenerUsuario } from "@/lib/auth";
+import { datosReserva } from "@/lib/validaciones/circulacion";
+import { crearReserva } from "@/lib/circulacion";
+import { responderError } from "@/lib/respuestas";
+export const POST = async (request: Request) => {
+  if (request.headers.get("origin") !== new URL(request.url).origin)
+    return Response.json({ error: "Solicitud no permitida." }, { status: 403 });
+  try {
+    const usuario = await obtenerUsuario();
+    if (!usuario)
+      return Response.json(
+        { error: "Inicia sesión nuevamente." },
+        { status: 401 },
+      );
+    const datos = datosReserva.safeParse(await request.json());
+    if (!datos.success)
+      return Response.json(
+        { error: "Revisa el libro, la cantidad y los campos del formulario." },
+        { status: 400 },
+      );
+    const registro = await crearReserva(datos.data, usuario);
+    return Response.json(
+      {
+        mensaje:
+          "Reserva registrada. No descuenta existencias hasta que sea atendida.",
+        id: registro.id,
+      },
+      { status: 201 },
+    );
+  } catch (error) {
+    return responderError(error);
+  }
+};

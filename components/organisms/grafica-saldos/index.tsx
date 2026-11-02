@@ -1,0 +1,5 @@
+const index = ({ datos }: { datos: { fecha: string; saldo: number }[] }) => {
+  const maximo = Math.max(1, ...datos.map(dato => dato.saldo));
+  return <section className="tarjeta grafica"><h2>Evolución de existencias</h2><p className="texto-suave">Saldo al cierre de cada día · últimos 30 días · hora de Colombia.</p>{datos.length ? <><div className="barras" role="list" aria-label="Saldos diarios">{datos.map(dato => <div role="listitem" className="barra-columna" key={dato.fecha} aria-label={`${dato.fecha}: ${dato.saldo} ejemplares`}><span className="barra-valor">{dato.saldo}</span><div className="barra" style={{ height: `${Math.max(2, dato.saldo / maximo * 160)}px` }} /><span className="barra-fecha">{dato.fecha.slice(8)}/{dato.fecha.slice(5, 7)}</span></div>)}</div><details><summary>Ver valores de la gráfica</summary><table><thead><tr><th>Fecha</th><th>Saldo</th></tr></thead><tbody>{datos.map(dato => <tr key={dato.fecha}><td>{dato.fecha}</td><td>{dato.saldo}</td></tr>)}</tbody></table></details></> : <p className="vacio">Registra un movimiento para ver la evolución de este libro.</p>}</section>;
+};
+export default index;

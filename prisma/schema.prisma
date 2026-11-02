@@ -1,0 +1,125 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../app/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum Rol {
+  ADMIN
+  USER
+}
+
+enum TipoMovimiento {
+  ENTRADA
+  SALIDA
+}
+
+enum MotivoMovimiento {
+  INICIAL
+  PRESTAMO
+  DEVOLUCION
+  AJUSTE
+}
+
+enum EstadoReserva {
+  PENDIENTE
+  ATENDIDA
+  CANCELADA
+}
+
+model Usuarios {
+  id                   String        @id @default(uuid()) @db.Uuid
+  nombre               String
+  apellido             String
+  correo               String        @unique
+  contrasenaHash       String
+  foto                 String?
+  rol                  Rol           @default(USER)
+  activo               Boolean       @default(true)
+  fechaCreacion        DateTime      @default(now()) @db.Timestamptz(3)
+  librosCreados        Libros[]
+  movimientos          Movimientos[]
+  prestamos            Prestamos[]   @relation("LectorPrestamo")
+  prestamosRegistrados Prestamos[]   @relation("ResponsablePrestamo")
+  reservas             Reservas[]
+}
+
+model Libros {
+  id            String        @id @default(uuid()) @db.Uuid
+  titulo        String
+  autor         String
+  isbn          String?       @unique
+  categoria     String
+  descripcion   String?
+  portada       String?
+  existencias   Int           @default(0)
+  activo        Boolean       @default(true)
+  creadoPorId   String        @db.Uuid
+  fechaCreacion DateTime      @default(now()) @db.Timestamptz(3)
+  creadoPor     Usuarios      @relation(fields: [creadoPorId], references: [id], onDelete: Restrict)
+  movimientos   Movimientos[]
+  prestamos     Prestamos[]
+  reservas      Reservas[]
+
+  @@index([creadoPorId])
+}
+
+model Movimientos {
+  id            String           @id @default(uuid()) @db.Uuid
+  libroId       String           @db.Uuid
+  responsableId String           @db.Uuid
+  tipo          TipoMovimiento
+  motivo        MotivoMovimiento
+  cantidad      Int
+  prestamoId    String?          @db.Uuid
+  observaciones String?
+  fechaCreacion DateTime         @default(now()) @db.Timestamptz(3)
+  libro         Libros           @relation(fields: [libroId], references: [id], onDelete: Restrict)
+  responsable   Usuarios         @relation(fields: [responsableId], references: [id], onDelete: Restrict)
+  prestamo      Prestamos?       @relation(fields: [prestamoId], references: [id], onDelete: Restrict)
+
+  @@index([libroId, fechaCreacion])
+  @@index([responsableId])
+  @@index([prestamoId])
+}
+
+// Cada prestamo corresponde a un titulo; la devolucion es completa.
+model Prestamos {
+  id              String        @id @default(uuid()) @db.Uuid
+  libroId         String        @db.Uuid
+  lectorId        String        @db.Uuid
+  responsableId   String        @db.Uuid
+  cantidad        Int
+  fechaLimite     DateTime      @db.Timestamptz(3)
+  fechaDevolucion DateTime?     @db.Timestamptz(3)
+  fechaCreacion   DateTime      @default(now()) @db.Timestamptz(3)
+  libro           Libros        @relation(fields: [libroId], references: [id], onDelete: Restrict)
+  lector          Usuarios      @relation("LectorPrestamo", fields: [lectorId], references: [id], onDelete: Restrict)
+  responsable     Usuarios      @relation("ResponsablePrestamo", fields: [responsableId], references: [id], onDelete: Restrict)
+  movimientos     Movimientos[]
+  reserva         Reservas?
+
+  @@index([libroId])
+  @@index([lectorId])
+  @@index([responsableId])
+}
+
+// Reservar es una solicitud: las existencias se descuentan al prestar.
+model Reservas {
+  id            String        @id @default(uuid()) @db.Uuid
+  libroId       String        @db.Uuid
+  usuarioId     String        @db.Uuid
+  cantidad      Int
+  estado        EstadoReserva @default(PENDIENTE)
+  prestamoId    String?       @unique @db.Uuid
+  fechaCreacion DateTime      @default(now()) @db.Timestamptz(3)
+  libro         Libros        @relation(fields: [libroId], references: [id], onDelete: Restrict)
+  usuario       Usuarios      @relation(fields: [usuarioId], references: [id], onDelete: Restrict)
+  prestamo      Prestamos?    @relation(fields: [prestamoId], references: [id], onDelete: Restrict)
+
+  @@index([libroId])
+  @@index([usuarioId, estado])
+}
