@@ -4,17 +4,19 @@ Biblioteca TeamCode es una aplicación web para gestionar una biblioteca. Permit
 
 Tiene dos roles: el administrador gestiona libros y usuarios, y el usuario consulta el catálogo y gestiona sus préstamos y reservas.
 
-##Integrantes:
+## Integrantes:
 Jimena Muñoz
+
 Milton Alejandro Cuervo Ramirez
+
 Juan Ignacio Parra Hoyos
 
-##Tenemos 2 Usuarios:
+## Usuarios:
 
  ADMIN: admin@biblioteca.com  password: Biblioteca2026! 
  
  USER: usuario@biblioteca.com password: Lectura2026! 
 
-##Link: 
+## Link: 
 
 https://team-code-biblioteca.vercel.app/
